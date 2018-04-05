@@ -90,9 +90,18 @@ def compute_transport(timeavg, mesh, mask, name='Drake Passage',output='transpor
   t = np.zeros(len(fileList))
   for i,fname in enumerate(fileList):
     ncid = Dataset(fname,'r')
-    vel = ncid.variables['timeMonthly_avg_normalTransportVelocity'][0,edgesToRead,:]
+    if 'timeMonthly_avg_normalTransportVelocity' in ncid.variables.keys():
+      vel = ncid.variables['timeMonthly_avg_normalTransportVelocity'][0,edgesToRead,:]
+    elif 'timeMonthly_avg_normalVelocity' in ncid.variables.keys():
+      vel = ncid.variables['timeMonthly_avg_normalVelocity'][0,edgesToRead,:]
+      if 'timeMonthly_avg_normalGMBolusVelocity' in ncid.variables.keys():
+        vel += ncid.variables['timeMonthly_avg_normalGMBolusVelocity'][0,edgesToRead,:]
+    else:
+      raise KeyError('no appropriate normalVelocity variable found')
+
     t[i] = ncid.variables['timeMonthly_avg_daysSinceStartOfSim'][:] / 365.
-    ncid.close()
+    ncid.close();
+
 #   Compute transport for each transect
     for j in range(nTransects):
       start = int(nTransectStartStop[j])
